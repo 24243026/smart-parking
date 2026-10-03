@@ -3,28 +3,22 @@ pipeline {
 
     stages {
 
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
-                bat 'docker build -t smart-parking:test .'
+                bat '"C:\\Users\\aravi\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" build -t smart-parking:test .'
             }
         }
 
         stage('Run Tests') {
             steps {
-                bat 'docker run --rm smart-parking:test python -m pytest -v'
+                bat '"C:\\Users\\aravi\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" run --rm smart-parking:test python -m pytest -v'
             }
         }
     }
 
     post {
         success {
-            echo 'Smart Parking CI Pipeline completed successfully!'
+            echo 'Smart Parking CI/CD Pipeline completed successfully!'
         }
 
         failure {
