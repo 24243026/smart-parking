@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SmartPark AI — User Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body class="dashboard-body">
+<div class="bg-grid"></div>
+
+<!-- ── Navbar ─────────────────────────────────────────────────────────── -->
+<nav class="navbar">
+  <div class="nav-brand">
+    <i class="fas fa-parking"></i>
+    SmartPark <span class="neon-text">AI</span>
+  </div>
+  <div class="nav-links">
+    <span class="nav-user"><i class="fas fa-user-circle"></i> {{ username }}</span>
+    <a href="/logout" class="btn-neon-sm"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+</nav>
+
+<!-- ── Notification toast ─────────────────────────────────────────────── -->
+<div class="toast" id="toast">
+  <i class="fas fa-bell"></i>
+  <span id="toastMsg">Slot Available!</span>
+</div>
+
+<main class="dashboard-main">
+
+  <!-- ── Stats Cards ──────────────────────────────────────────────────── -->
+  <section class="stats-section">
+    <div class="stat-card glow-green">
+      <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+      <div class="stat-info">
+        <div class="stat-num" id="statAvailable">{{ stats.available }}</div>
+        <div class="stat-label">Available</div>
+      </div>
+    </div>
+    <div class="stat-card glow-red">
+      <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
+      <div class="stat-info">
+        <div class="stat-num" id="statOccupied">{{ stats.occupied }}</div>
+        <div class="stat-label">Occupied</div>
+      </div>
+    </div>
+    <div class="stat-card glow-yellow">
+      <div class="stat-icon"><i class="fas fa-exclamation-circle"></i></div>
+      <div class="stat-info">
+        <div class="stat-num" id="statModerate">{{ stats.moderate }}</div>
+        <div class="stat-label">Moderate</div>
+      </div>
+    </div>
+    <div class="stat-card glow-blue">
+      <div class="stat-icon"><i class="fas fa-layer-group"></i></div>
+      <div class="stat-info">
+        <div class="stat-num">{{ stats.total }}</div>
+        <div class="stat-label">Total Slots</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="dashboard-grid">
+
+    <!-- ── AI Prediction Form ──────────────────────────────────────────── -->
+    <div class="glass-card predict-card">
+      <div class="card-title">
+        <i class="fas fa-brain"></i> AI Parking Prediction
+      </div>
+      <p class="card-sub">Enter current conditions to get an AI-powered forecast</p>
+
+      <form action="/predict" method="POST" class="predict-form" id="predictForm">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label><i class="fas fa-clock"></i> Hour of Day</label>
+            <select name="time_hour">
+              {% for h in range(24) %}
+              <option value="{{ h }}" {% if h==12 %}selected{% endif %}>
+                {{ "%02d:00" | format(h) }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-calendar"></i> Day of Week</label>
+            <select name="day">
+              {% for d, name in [(0,'Monday'),(1,'Tuesday'),(2,'Wednesday'),(3,'Thursday'),(4,'Friday'),(5,'Saturday'),(6,'Sunday')] %}
+              <option value="{{ d }}">{{ name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label><i class="fas fa-car"></i> Number of Cars</label>
+            <div class="slider-wrap">
+              <input type="range" name="num_cars" id="carsSlider" min="0" max="100" value="30"
+                     oninput="document.getElementById('carsVal').textContent=this.value"/>
+              <span class="slider-val" id="carsVal">30</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-traffic-light"></i> Traffic Level</label>
+            <select name="traffic_level">
+              <option value="0">🟢 Low</option>
+              <option value="1" selected>🟡 Medium</option>
+              <option value="2">🔴 High</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-neon btn-full" id="predictBtn">
+          <i class="fas fa-rocket"></i> RUN AI PREDICTION
+          <span class="btn-shine"></span>
+        </button>
+
+        <!-- Loading overlay inside button area -->
+        <div class="loading-bar" id="loadingBar">
+          <div class="loading-fill"></div>
+        </div>
+      </form>
+    </div>
+
+    <!-- ── Live Parking Grid ───────────────────────────────────────────── -->
+    <div class="glass-card grid-card">
+      <div class="card-title">
+        <i class="fas fa-th"></i> Live Parking Map
+        <span class="live-badge"><i class="fas fa-circle"></i> LIVE</span>
+      </div>
+
+      <div class="legend">
+        <span class="legend-item"><i class="fas fa-square" style="color:#00ff88"></i> Available</span>
+        <span class="legend-item"><i class="fas fa-square" style="color:#ffd700"></i> Moderate</span>
+        <span class="legend-item"><i class="fas fa-square" style="color:#ff4d6d"></i> Occupied</span>
+      </div>
+
+      <!-- Tabs for areas -->
+      <div class="area-tabs">
+        <button class="area-tab active" onclick="showArea('A',this)">Area A</button>
+        <button class="area-tab" onclick="showArea('B',this)">Area B</button>
+        <button class="area-tab" onclick="showArea('C',this)">Area C</button>
+      </div>
+
+      {% for area in ['A','B','C'] %}
+      <div class="parking-grid" id="area{{ area }}" style="display:{% if area=='A' %}grid{% else %}none{% endif %}">
+        {% for slot in slots if slot.area == area %}
+        <div class="slot slot-{{ slot.status }}"
+             onclick="bookSlot('{{ slot.slot_number }}', '{{ slot.status }}')"
+             title="{{ slot.slot_number }} — {{ slot.status.title() }}">
+          <div class="slot-num">{{ slot.slot_number }}</div>
+          <i class="fas fa-car slot-car-icon"></i>
+          <div class="slot-status">{{ slot.status.title() }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+
+  </div><!-- /dashboard-grid -->
+
+</main><!-- /main -->
+
+<!-- ── Book Slot Modal ────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="bookModal" style="display:none">
+  <div class="glass-card modal-card">
+    <h3><i class="fas fa-parking"></i> Book Parking Slot</h3>
+    <p id="modalSlotInfo">Slot info here</p>
+    <div class="modal-actions">
+      <button class="btn-neon" id="confirmBook" onclick="confirmBooking()">
+        <i class="fas fa-check"></i> Confirm
+      </button>
+      <button class="btn-ghost" onclick="closeModal()">
+        <i class="fas fa-times"></i> Cancel
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+<script>
+  let selectedSlot = null;
+
+  function showArea(area, btn) {
+    document.querySelectorAll('.parking-grid').forEach(g => g.style.display = 'none');
+    document.querySelectorAll('.area-tab').forEach(b => b.classList.remove('active'));
+    document.getElementById('area' + area).style.display = 'grid';
+    btn.classList.add('active');
+  }
+
+  function bookSlot(slotNum, status) {
+    if (status === 'occupied') {
+      showToast('❌ This slot is already occupied!', 'error');
+      return;
+    }
+    selectedSlot = slotNum;
+    document.getElementById('modalSlotInfo').textContent =
+      `Do you want to book Slot ${slotNum}? (Status: ${status})`;
+    document.getElementById('bookModal').style.display = 'flex';
+  }
+
+  function closeModal() {
+    document.getElementById('bookModal').style.display = 'none';
+    selectedSlot = null;
+  }
+
+  function confirmBooking() {
+    if (!selectedSlot) return;
+    fetch('/api/book', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({slot_number: selectedSlot})
+    })
+    .then(r => r.json())
+    .then(d => {
+      closeModal();
+      if (d.success) {
+        showToast('✅ ' + d.message, 'success');
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        showToast('❌ ' + (d.error || 'Error'), 'error');
+      }
+    });
+  }
+
+  // Loading animation on form submit
+  document.getElementById('predictForm').addEventListener('submit', () => {
+    document.getElementById('loadingBar').style.display = 'block';
+    document.getElementById('predictBtn').disabled = true;
+    document.getElementById('predictBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing…';
+  });
+
+  // Auto-refresh slot data every 30s
+  setInterval(refreshSlots, 30000);
+
+  function refreshSlots() {
+    fetch('/api/slots')
+      .then(r => r.json())
+      .then(slots => {
+        let avail = 0, occ = 0, mod = 0;
+        slots.forEach(s => {
+          const el = document.querySelector(`[title^="${s.slot_number}"]`);
+          if (el) {
+            el.className = `slot slot-${s.status}`;
+            el.querySelector('.slot-status').textContent = s.status.charAt(0).toUpperCase() + s.status.slice(1);
+            el.title = `${s.slot_number} — ${s.status}`;
+          }
+          if (s.status === 'available') avail++;
+          else if (s.status === 'occupied') occ++;
+          else mod++;
+        });
+        document.getElementById('statAvailable').textContent = avail;
+        document.getElementById('statOccupied').textContent  = occ;
+        document.getElementById('statModerate').textContent  = mod;
+      });
+  }
+</script>
+</body>
+</html>

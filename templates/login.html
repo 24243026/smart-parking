@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SmartPark AI — Login</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body class="auth-body">
+
+  <!-- Animated background particles -->
+  <div class="bg-grid"></div>
+  <div class="particles" id="particles"></div>
+
+  <!-- Floating icons -->
+  <div class="float-icon" style="top:10%;left:8%;animation-delay:0s;"><i class="fas fa-car"></i></div>
+  <div class="float-icon" style="top:70%;left:5%;animation-delay:1.5s;"><i class="fas fa-parking"></i></div>
+  <div class="float-icon" style="top:20%;right:6%;animation-delay:0.8s;"><i class="fas fa-brain"></i></div>
+  <div class="float-icon" style="top:75%;right:8%;animation-delay:2s;"><i class="fas fa-chart-line"></i></div>
+
+  <div class="auth-container">
+    <!-- Logo -->
+    <div class="auth-logo">
+      <div class="logo-icon"><i class="fas fa-parking"></i></div>
+      <h1 class="logo-text">SmartPark <span class="neon-text">AI</span></h1>
+      <p class="logo-sub">Intelligent Parking Management System</p>
+    </div>
+
+    <!-- Card -->
+    <div class="glass-card auth-card">
+      <div class="card-header">
+        <h2><i class="fas fa-sign-in-alt"></i> Welcome Back</h2>
+        <p>Sign in to access your dashboard</p>
+      </div>
+
+      {% if error %}
+      <div class="alert alert-error">
+        <i class="fas fa-exclamation-triangle"></i> {{ error }}
+      </div>
+      {% endif %}
+
+      <form action="/login" method="POST" class="auth-form">
+        <div class="form-group">
+          <label><i class="fas fa-user"></i> Username</label>
+          <input type="text" name="username" placeholder="Enter username" required autocomplete="username"/>
+          <span class="input-glow"></span>
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-lock"></i> Password</label>
+          <input type="password" name="password" placeholder="Enter password" required autocomplete="current-password"/>
+          <span class="input-glow"></span>
+        </div>
+        <button type="submit" class="btn-neon btn-full">
+          <i class="fas fa-rocket"></i> LOGIN
+          <span class="btn-shine"></span>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <p>Don't have an account? <a href="/register" class="neon-link">Register here</a></p>
+      </div>
+
+      <!-- Quick login hint -->
+      <div class="hint-box">
+        <i class="fas fa-info-circle"></i>
+        <span>Admin: <strong>admin</strong> / <strong>admin123</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  <script>createParticles();</script>
+</body>
+</html>

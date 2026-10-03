@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SmartPark AI — Admin</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+</head>
+<body class="dashboard-body">
+<div class="bg-grid"></div>
+
+<!-- ── Navbar ─────────────────────────────────────────────────────────── -->
+<nav class="navbar">
+  <div class="nav-brand">
+    <i class="fas fa-shield-alt"></i>
+    SmartPark <span class="neon-text">ADMIN</span>
+  </div>
+  <div class="nav-links">
+    <span class="nav-user nav-admin"><i class="fas fa-user-shield"></i> Administrator</span>
+    <a href="/logout" class="btn-neon-sm"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+</nav>
+
+<div class="toast" id="toast"><i class="fas fa-bell"></i><span id="toastMsg"></span></div>
+
+<main class="dashboard-main">
+
+  <!-- ── Stats Cards ──────────────────────────────────────────────────── -->
+  <section class="stats-section">
+    <div class="stat-card glow-blue">
+      <div class="stat-icon"><i class="fas fa-layer-group"></i></div>
+      <div class="stat-info">
+        <div class="stat-num">{{ stats.total }}</div>
+        <div class="stat-label">Total Slots</div>
+      </div>
+    </div>
+    <div class="stat-card glow-green">
+      <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+      <div class="stat-info">
+        <div class="stat-num">{{ stats.available }}</div>
+        <div class="stat-label">Available</div>
+      </div>
+    </div>
+    <div class="stat-card glow-red">
+      <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
+      <div class="stat-info">
+        <div class="stat-num">{{ stats.occupied }}</div>
+        <div class="stat-label">Occupied</div>
+      </div>
+    </div>
+    <div class="stat-card glow-yellow">
+      <div class="stat-icon"><i class="fas fa-exclamation-circle"></i></div>
+      <div class="stat-info">
+        <div class="stat-num">{{ stats.moderate }}</div>
+        <div class="stat-label">Moderate</div>
+      </div>
+    </div>
+    <div class="stat-card glow-purple">
+      <div class="stat-icon"><i class="fas fa-users"></i></div>
+      <div class="stat-info">
+        <div class="stat-num">{{ stats.users }}</div>
+        <div class="stat-label">Registered Users</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Charts Row ───────────────────────────────────────────────────── -->
+  <div class="charts-row">
+
+    <!-- Donut chart – overall usage -->
+    <div class="glass-card chart-card">
+      <div class="card-title"><i class="fas fa-chart-pie"></i> Slot Status Overview</div>
+      <div class="chart-wrap">
+        <canvas id="donutChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Bar chart – area breakdown -->
+    <div class="glass-card chart-card chart-card--wide">
+      <div class="card-title"><i class="fas fa-chart-bar"></i> Area-wise Breakdown</div>
+      <div class="chart-wrap">
+        <canvas id="areaChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Line chart – cluster distribution (simulated hourly demand) -->
+    <div class="glass-card chart-card chart-card--wide">
+      <div class="card-title"><i class="fas fa-chart-line"></i> Simulated Hourly Demand</div>
+      <div class="chart-wrap">
+        <canvas id="demandChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Prediction Log Table ─────────────────────────────────────────── -->
+  <div class="glass-card table-card">
+    <div class="card-title"><i class="fas fa-history"></i> Recent AI Predictions Log</div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th><th>Time</th><th>Day</th><th>Cars</th>
+            <th>Traffic</th><th>LR Result</th><th>RF Result</th>
+            <th>Area</th><th>Logged At</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+          <tr>
+            <td>#{{ log.id }}</td>
+            <td>{{ "%02d:00"|format(log.time_hour) }}</td>
+            <td>{{ ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][log.day] }}</td>
+            <td><span class="badge badge-blue">{{ log.num_cars }}</span></td>
+            <td>
+              {% if log.traffic_level==0 %}<span class="badge badge-green">Low</span>
+              {% elif log.traffic_level==1 %}<span class="badge badge-yellow">Medium</span>
+              {% else %}<span class="badge badge-red">High</span>{% endif %}
+            </td>
+            <td>
+              {% if log.lr_result=='Available' %}<span class="badge badge-green">Available</span>
+              {% elif log.lr_result=='Moderate' %}<span class="badge badge-yellow">Moderate</span>
+              {% else %}<span class="badge badge-red">Full</span>{% endif %}
+            </td>
+            <td>
+              {% if log.rf_result=='Available' %}<span class="badge badge-green">Available</span>
+              {% elif log.rf_result=='Moderate' %}<span class="badge badge-yellow">Moderate</span>
+              {% else %}<span class="badge badge-red">Full</span>{% endif %}
+            </td>
+            <td><span class="badge badge-purple">{{ log.cluster_area }}</span></td>
+            <td>{{ log.created_at[:16] if log.created_at else '—' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="9" class="empty-msg">No predictions logged yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Users Table ──────────────────────────────────────────────────── -->
+  <div class="glass-card table-card">
+    <div class="card-title"><i class="fas fa-users"></i> Registered Users</div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>ID</th><th>Username</th><th>Role</th><th>Joined</th></tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td>#{{ u.id }}</td>
+            <td><i class="fas fa-user-circle"></i> {{ u.username }}</td>
+            <td><span class="badge badge-blue">{{ u.role }}</span></td>
+            <td>{{ u.created_at[:10] if u.created_at else '—' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="empty-msg">No users registered yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+<script>
+// ── Chart.js global defaults ─────────────────────────────────────────────────
+Chart.defaults.color = '#a0aec0';
+Chart.defaults.font.family = 'Rajdhani';
+
+const areaData = {{ area_data | safe }};
+
+// ── 1. Donut Chart ────────────────────────────────────────────────────────────
+const donut = new Chart(document.getElementById('donutChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Available', 'Occupied', 'Moderate'],
+    datasets: [{
+      data: [{{ stats.available }}, {{ stats.occupied }}, {{ stats.moderate }}],
+      backgroundColor: ['rgba(0,255,136,0.8)', 'rgba(255,77,109,0.8)', 'rgba(255,215,0,0.8)'],
+      borderColor:     ['#00ff88','#ff4d6d','#ffd700'],
+      borderWidth: 2,
+      hoverOffset: 8,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    cutout: '70%',
+    plugins: {
+      legend: { position: 'bottom', labels: { padding: 16, font: { size: 13 } } }
+    }
+  }
+});
+
+// ── 2. Area Bar Chart ────────────────────────────────────────────────────────
+const areas    = Object.keys(areaData);
+const avails   = areas.map(a => areaData[a].available || 0);
+const occups   = areas.map(a => areaData[a].occupied  || 0);
+const mods     = areas.map(a => areaData[a].moderate  || 0);
+
+new Chart(document.getElementById('areaChart'), {
+  type: 'bar',
+  data: {
+    labels: areas.map(a => 'Area ' + a),
+    datasets: [
+      { label: 'Available', data: avails, backgroundColor: 'rgba(0,255,136,0.6)', borderColor:'#00ff88', borderWidth:2 },
+      { label: 'Occupied',  data: occups, backgroundColor: 'rgba(255,77,109,0.6)', borderColor:'#ff4d6d', borderWidth:2 },
+      { label: 'Moderate',  data: mods,   backgroundColor: 'rgba(255,215,0,0.6)',  borderColor:'#ffd700', borderWidth:2 },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'top' } },
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a0aec0' } },
+      y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a0aec0' }, beginAtZero: true }
+    }
+  }
+});
+
+// ── 3. Simulated Hourly Demand Line Chart ────────────────────────────────────
+const hours = Array.from({length:24}, (_,i) => `${String(i).padStart(2,'0')}:00`);
+const demand = [10,8,6,5,7,20,45,65,75,70,60,58,62,55,50,60,70,75,65,50,40,30,20,12];
+const gradient = document.getElementById('demandChart').getContext('2d');
+const grad = gradient.createLinearGradient(0,0,0,200);
+grad.addColorStop(0,'rgba(0,212,255,0.4)');
+grad.addColorStop(1,'rgba(0,212,255,0.0)');
+
+new Chart(document.getElementById('demandChart'), {
+  type: 'line',
+  data: {
+    labels: hours,
+    datasets: [{
+      label: 'Estimated Cars',
+      data: demand,
+      borderColor: '#00d4ff',
+      backgroundColor: grad,
+      borderWidth: 2.5,
+      tension: 0.4,
+      pointRadius: 3,
+      pointHoverRadius: 6,
+      fill: true,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a0aec0', maxTicksLimit: 8 } },
+      y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a0aec0' }, beginAtZero: true }
+    }
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SmartPark AI — Prediction Result</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+</head>
+<body class="dashboard-body">
+<div class="bg-grid"></div>
+
+<!-- ── Navbar ─────────────────────────────────────────────────────────── -->
+<nav class="navbar">
+  <div class="nav-brand">
+    <i class="fas fa-parking"></i>
+    SmartPark <span class="neon-text">AI</span>
+  </div>
+  <div class="nav-links">
+    <a href="/user" class="btn-neon-sm"><i class="fas fa-arrow-left"></i> Back</a>
+  </div>
+</nav>
+
+<main class="dashboard-main result-main">
+
+  <!-- ── Input Summary ────────────────────────────────────────────────── -->
+  <div class="glass-card input-summary">
+    <div class="summary-grid">
+      <div class="summary-item">
+        <i class="fas fa-clock"></i>
+        <span>{{ "%02d:00"|format(result.time_hour) }}</span>
+        <label>Time</label>
+      </div>
+      <div class="summary-item">
+        <i class="fas fa-calendar"></i>
+        <span>{{ result.day_name }}</span>
+        <label>Day</label>
+      </div>
+      <div class="summary-item">
+        <i class="fas fa-car"></i>
+        <span>{{ result.num_cars }}</span>
+        <label>Cars</label>
+      </div>
+      <div class="summary-item">
+        <i class="fas fa-traffic-light"></i>
+        <span>{{ ['Low','Medium','High'][result.traffic_level] }}</span>
+        <label>Traffic</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Agreement Badge ─────────────────────────────────────────────── -->
+  <div class="agreement-badge">
+    <i class="fas fa-robot"></i>
+    {{ result.agreement }}
+  </div>
+
+  <!-- ── Model Comparison Row ─────────────────────────────────────────── -->
+  <div class="models-row">
+
+    <!-- Logistic Regression -->
+    <div class="glass-card model-card model-lr">
+      <div class="model-header">
+        <div class="model-icon lr-icon"><i class="fas fa-project-diagram"></i></div>
+        <div>
+          <h3>Logistic Regression</h3>
+          <p class="model-sub">Basic Prediction Model</p>
+        </div>
+        <div class="model-accuracy">{{ result.lr_accuracy }}%</div>
+      </div>
+
+      <div class="status-display status-{{ result.lr_status|lower }}">
+        <div class="status-icon">
+          {% if result.lr_status=='Available' %}🟢
+          {% elif result.lr_status=='Moderate' %}🟡
+          {% else %}🔴{% endif %}
+        </div>
+        <div class="status-text">{{ result.lr_status }}</div>
+        <div class="status-conf">{{ result.lr_confidence }}% confidence</div>
+      </div>
+
+      <!-- Probability bars -->
+      <div class="prob-bars">
+        <div class="prob-row">
+          <span>Available</span>
+          <div class="prob-bar-wrap">
+            <div class="prob-bar green" style="width:{{ result.lr_proba.Available }}%"></div>
+          </div>
+          <span>{{ result.lr_proba.Available }}%</span>
+        </div>
+        <div class="prob-row">
+          <span>Moderate</span>
+          <div class="prob-bar-wrap">
+            <div class="prob-bar yellow" style="width:{{ result.lr_proba.Moderate }}%"></div>
+          </div>
+          <span>{{ result.lr_proba.Moderate }}%</span>
+        </div>
+        <div class="prob-row">
+          <span>Full</span>
+          <div class="prob-bar-wrap">
+            <div class="prob-bar red" style="width:{{ result.lr_proba.Full }}%"></div>
+          </div>
+          <span>{{ result.lr_proba.Full }}%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Random Forest -->
+    <div class="glass-card model-card model-rf">
+      <div class="model-header">
+        <div class="model-icon rf-icon"><i class="fas fa-tree"></i></div>
+        <div>
+          <h3>Random Forest</h3>
+          <p class="model-sub">Advanced Prediction Model</p>
+        </div>
+        <div class="model-accuracy">{{ result.rf_accuracy }}%</div>
+      </div>
+
+      <div class="status-display status-{{ result.rf_status|lower }}">
+        <div class="status-icon">
+          {% if result.rf_status=='Available' %}🟢
+          {% elif result.rf_status=='Moderate' %}🟡
+          {% else %}🔴{% endif %}
+        </div>
+        <div class="status-text">{{ result.rf_status }}</div>
+        <div class="status-conf">{{ result.rf_confidence }}% confidence</div>
+      </div>
+
+      <div class="prob-bars">
+        <div class="prob-row">
+          <span>Available</span>
+          <div class="prob-bar-wrap">
+            <div class="prob-bar green" style="width:{{ result.rf_proba.Available }}%"></div>
+          </div>
+          <span>{{ result.rf_proba.Available }}%</span>
+        </div>
+        <div class="prob-row">
+          <span>Moderate</span>
+          <div class="prob-bar-wrap">
+            <div class="prob-bar yellow" style="width:{{ result.rf_proba.Moderate }}%"></div>
+          </div>
+          <span>{{ result.rf_proba.Moderate }}%</span>
+        </div>
+        <div class="prob-row">
+          <span>Full</span>
+          <div class="prob-bar-wrap">
+            <div class="prob-bar red" style="width:{{ result.rf_proba.Full }}%"></div>
+          </div>
+          <span>{{ result.rf_proba.Full }}%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- K-Means -->
+    <div class="glass-card model-card model-km">
+      <div class="model-header">
+        <div class="model-icon km-icon"><i class="fas fa-object-group"></i></div>
+        <div>
+          <h3>K-Means Cluster</h3>
+          <p class="model-sub">Area Recommendation</p>
+        </div>
+      </div>
+
+      <div class="cluster-display cluster-{{ result.cluster_id }}">
+        <div class="cluster-num">Area {{ result.recommended_area }}</div>
+        <div class="cluster-label">{{ result.cluster_label }}</div>
+      </div>
+
+      <div class="recommendation-box">
+        <p>{{ result.recommendation }}</p>
+      </div>
+
+      <!-- Cluster ring indicator -->
+      <div class="cluster-rings">
+        <div class="ring ring-a {% if result.recommended_area=='A' %}ring-active{% endif %}">A</div>
+        <div class="ring ring-b {% if result.recommended_area=='B' %}ring-active{% endif %}">B</div>
+        <div class="ring ring-c {% if result.recommended_area=='C' %}ring-active{% endif %}">C</div>
+      </div>
+    </div>
+
+  </div><!-- /models-row -->
+
+  <!-- ── Time Series Forecast ─────────────────────────────────────────── -->
+  <div class="glass-card forecast-card">
+    <div class="card-title">
+      <i class="fas fa-chart-area"></i> Time Series Forecast — Next 6 Hours
+    </div>
+
+    <!-- Chart -->
+    <div class="forecast-chart-wrap">
+      <canvas id="forecastChart"></canvas>
+    </div>
+
+    <!-- Hourly cards -->
+    <div class="forecast-hours">
+      {% for f in result.forecast %}
+      <div class="hour-card">
+        <div class="hour-label">{{ f.hour_label }}</div>
+        <div class="hour-bar-wrap">
+          <div class="hour-bar" style="height:{{ [f.cars, 100]|min }}%;background:{{ f.color }}"></div>
+        </div>
+        <div class="hour-cars">{{ f.cars | int }}</div>
+        <div class="hour-demand" style="color:{{ f.color }}">{{ f.demand }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ── Action Buttons ───────────────────────────────────────────────── -->
+  <div class="result-actions">
+    <a href="/user" class="btn-neon"><i class="fas fa-redo"></i> New Prediction</a>
+    <a href="/user" class="btn-ghost"><i class="fas fa-th"></i> View Parking Map</a>
+  </div>
+
+</main>
+
+<script>
+// ── Forecast Line Chart ──────────────────────────────────────────────────────
+const forecastData = {{ result.forecast | tojson }};
+const ctx = document.getElementById('forecastChart').getContext('2d');
+
+const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+gradient.addColorStop(0, 'rgba(0, 212, 255, 0.5)');
+gradient.addColorStop(1, 'rgba(0, 212, 255, 0.0)');
+
+new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: forecastData.map(f => f.hour_label),
+    datasets: [{
+      label: 'Predicted Cars',
+      data: forecastData.map(f => f.cars),
+      borderColor: '#00d4ff',
+      backgroundColor: gradient,
+      borderWidth: 3,
+      tension: 0.4,
+      pointRadius: 6,
+      pointBackgroundColor: forecastData.map(f => f.color),
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2,
+      fill: true,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => `${Math.round(ctx.raw)} cars — ${forecastData[ctx.dataIndex].demand} demand`
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: 'rgba(255,255,255,0.05)' },
+        ticks: { color: '#a0aec0', font: { family: 'Rajdhani', size: 13 } }
+      },
+      y: {
+        grid: { color: 'rgba(255,255,255,0.05)' },
+        ticks: { color: '#a0aec0', font: { family: 'Rajdhani', size: 13 } },
+        beginAtZero: true, max: 100
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>

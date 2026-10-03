@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SmartPark AI — Register</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body class="auth-body">
+
+  <div class="bg-grid"></div>
+  <div class="particles" id="particles"></div>
+
+  <div class="float-icon" style="top:12%;left:7%;animation-delay:0s;"><i class="fas fa-user-plus"></i></div>
+  <div class="float-icon" style="top:68%;left:4%;animation-delay:1.2s;"><i class="fas fa-shield-alt"></i></div>
+  <div class="float-icon" style="top:18%;right:5%;animation-delay:0.6s;"><i class="fas fa-key"></i></div>
+  <div class="float-icon" style="top:78%;right:7%;animation-delay:1.8s;"><i class="fas fa-car"></i></div>
+
+  <div class="auth-container">
+    <div class="auth-logo">
+      <div class="logo-icon"><i class="fas fa-parking"></i></div>
+      <h1 class="logo-text">SmartPark <span class="neon-text">AI</span></h1>
+      <p class="logo-sub">Create your account</p>
+    </div>
+
+    <div class="glass-card auth-card">
+      <div class="card-header">
+        <h2><i class="fas fa-user-astronaut"></i> Create Account</h2>
+        <p>Join the intelligent parking revolution</p>
+      </div>
+
+      {% if error %}
+      <div class="alert alert-error">
+        <i class="fas fa-exclamation-triangle"></i> {{ error }}
+      </div>
+      {% endif %}
+
+      {% if success %}
+      <div class="alert alert-success">
+        <i class="fas fa-check-circle"></i> {{ success }}
+      </div>
+      {% endif %}
+
+      <form action="/register" method="POST" class="auth-form">
+        <div class="form-group">
+          <label><i class="fas fa-user"></i> Username</label>
+          <input type="text" name="username" placeholder="Choose a username" required minlength="3"/>
+          <span class="input-glow"></span>
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-lock"></i> Password</label>
+          <input type="password" name="password" placeholder="Min 6 characters" required minlength="6" id="pwd"/>
+          <span class="input-glow"></span>
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-lock"></i> Confirm Password</label>
+          <input type="password" name="confirm_password" placeholder="Re-enter password" required id="cpwd"/>
+          <span class="input-glow"></span>
+        </div>
+
+        <!-- Password strength bar -->
+        <div class="strength-bar-wrap">
+          <div class="strength-bar" id="strengthBar"></div>
+          <span class="strength-label" id="strengthLabel">Password Strength</span>
+        </div>
+
+        <button type="submit" class="btn-neon btn-full" id="submitBtn">
+          <i class="fas fa-user-plus"></i> CREATE ACCOUNT
+          <span class="btn-shine"></span>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <p>Already have an account? <a href="/login" class="neon-link">Login here</a></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  <script>
+    createParticles();
+
+    // Password strength indicator
+    const pwd = document.getElementById('pwd');
+    const bar = document.getElementById('strengthBar');
+    const lbl = document.getElementById('strengthLabel');
+
+    pwd.addEventListener('input', () => {
+      const v = pwd.value;
+      let strength = 0;
+      if (v.length >= 6) strength++;
+      if (v.length >= 10) strength++;
+      if (/[A-Z]/.test(v)) strength++;
+      if (/[0-9]/.test(v)) strength++;
+      if (/[^A-Za-z0-9]/.test(v)) strength++;
+
+      const pct = (strength / 5) * 100;
+      bar.style.width = pct + '%';
+      if (strength <= 1) { bar.style.background = '#ff4d6d'; lbl.textContent = 'Weak'; }
+      else if (strength <= 3) { bar.style.background = '#ffd700'; lbl.textContent = 'Medium'; }
+      else { bar.style.background = '#00ff88'; lbl.textContent = 'Strong'; }
+    });
+  </script>
+</body>
+</html>
