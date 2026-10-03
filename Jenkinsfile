@@ -11,14 +11,15 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                bat 'python -m pip install -r requirements.txt'
-                bat 'python -m pip install pytest'
+                bat 'py -3.11 -m pip install --upgrade pip'
+                bat 'py -3.11 -m pip install -r requirements.txt'
+                bat 'py -3.11 -m pip install pytest'
             }
         }
 
         stage('Run Tests') {
             steps {
-                bat 'python -m pytest -v'
+                bat 'py -3.11 -m pytest -v'
             }
         }
 
@@ -33,6 +34,7 @@ pipeline {
         success {
             echo 'Smart Parking CI/CD Pipeline completed successfully!'
         }
+
         failure {
             echo 'Pipeline failed. Check the stage logs.'
         }
